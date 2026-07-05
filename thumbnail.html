@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Arch Linux Daily — Thumbnail Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-border: #262b36;
+    --text: #e7e9ee;
+    --muted: #9aa3b2;
+    --arch-blue: #1793d1;
+    --accent: #58c4ff;
+  }
+  * { box-sizing: border-box; }
+  body{
+    margin:0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(1200px 800px at 10% -10%, #16233a 0%, var(--bg) 60%);
+    color: var(--text);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding: 32px 16px 64px;
+  }
+  .wrap{
+    width:100%;
+    max-width: 980px;
+  }
+  h1{
+    font-size: 1.3rem;
+    margin: 0 0 4px;
+    letter-spacing: 0.2px;
+  }
+  h1 span{ color: var(--arch-blue); }
+  p.sub{
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 760px){
+    .layout{ grid-template-columns: 1fr; }
+  }
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 18px;
+  }
+  label{
+    display:block;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  input[type="text"], input[type="number"]{
+    width:100%;
+    background:#0f1218;
+    border:1px solid var(--panel-border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    font-family: inherit;
+  }
+  input:focus{
+    outline: none;
+    border-color: var(--arch-blue);
+  }
+  .row{ display:flex; gap:10px; }
+  .row > div{ flex:1; }
+  .swatches{
+    display:flex;
+    gap:8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .swatch{
+    width:28px;height:28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor:pointer;
+  }
+  .swatch.active{ border-color: var(--accent); }
+  button{
+    width:100%;
+    padding: 12px 14px;
+    background: var(--arch-blue);
+    color: white;
+    border:none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor:pointer;
+    transition: background 0.15s ease;
+  }
+  button:hover{ background:#1580b3; }
+  button.secondary{
+    background: transparent;
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    margin-top: 8px;
+  }
+  button.secondary:hover{ background: #1d212b; }
+  .canvas-holder{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: repeating-conic-gradient(#1b1f28 0% 25%, #14171e 0% 50%) 50% / 24px 24px;
+    border-radius: 12px;
+    overflow:hidden;
+  }
+  canvas{
+    width:100%;
+    height:auto;
+    display:block;
+  }
+  .hint{
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.4;
+  }
+  .credit{
+    text-align:center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin-top: 28px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>Day [X]</span> of Installing Arch Linux Daily — Thumbnail Maker</h1>
+  <p class="sub">Type the day, tweak the look, download your thumbnail.</p>
+
+  <div class="layout">
+    <div class="panel">
+      <label for="dayInput">Day number / text</label>
+      <input type="text" id="dayInput" value="47" maxlength="30" />
+
+      <label for="fontSize">Caption size (px)</label>
+      <input type="number" id="fontSize" value="46" min="18" max="90" />
+
+      <label for="yPos">Vertical Position (Y: 0-720)</label>
+      <input type="number" id="yPos" value="40" min="0" max="720" />
+
+      <label>Caption color</label>
+      <div class="swatches" id="swatches">
+        <div class="swatch active" style="background:#111111" data-color="#111111"></div>
+        <div class="swatch" style="background:#1793d1" data-color="#1793d1"></div>
+        <div class="swatch" style="background:#c0392b" data-color="#c0392b"></div>
+        <div class="swatch" style="background:#2e7d32" data-color="#2e7d32"></div>
+        <div class="swatch" style="background:#6c3483" data-color="#6c3483"></div>
+      </div>
+
+      <button id="downloadBtn">Download thumbnail (PNG)</button>
+      <button class="secondary" id="resetBtn">Reset to defaults</button>
+
+      <p class="hint">
+        Caption font is Ubuntu Mono, italic + underlined, centered at the top of the image.
+        Everything renders live on the canvas to the right — what you see is what you get.
+      </p>
+    </div>
+
+    <div class="panel">
+      <div class="canvas-holder">
+        <canvas id="thumbCanvas" width="1280" height="720"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <p class="credit">Base image included. Font: Ubuntu Mono (Google Fonts).</p>
+</div>
+
+<script>
+const BASE_IMAGE = 'https://files.catbox.moe/mh7q53.jpg';
+
+const canvas = document.getElementById('thumbCanvas');
+const ctx = canvas.getContext('2d');
+const dayInput = document.getElementById('dayInput');
+const fontSizeInput = document.getElementById('fontSize');
+const yPosInput = document.getElementById('yPos');
+const swatches = document.querySelectorAll('.swatch');
+const downloadBtn = document.getElementById('downloadBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+let captionColor = '#111111';
+let baseImg = new Image();
+let imgLoaded = false;
+
+baseImg.onload = () => { imgLoaded = true; draw(); };
+baseImg.crossOrigin = "anonymous"; 
+baseImg.src = BASE_IMAGE;
+
+function buildText(){
+  const val = (dayInput.value || '').trim() || '?';
+  return `Day ${val} of installing Arch Linux daily.`;
+}
+
+function draw(){
+  if(!imgLoaded) return;
+  ctx.clearRect(0,0,canvas.width, canvas.height);
+  ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+
+  const text = buildText();
+  const fontSize = parseInt(fontSizeInput.value, 10) || 46;
+  
+  // Fall back to 40 if empty or invalid while typing
+  let y = parseInt(yPosInput.value, 10);
+  if (isNaN(y)) y = 40; 
+
+  ctx.save();
+  ctx.font = `italic 700 ${fontSize}px "Ubuntu Mono", monospace`;
+  ctx.fillStyle = captionColor;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+
+  const x = canvas.width / 2;
+
+  // subtle white outline so caption stays readable over any background
+  ctx.lineWidth = Math.max(2, fontSize * 0.06);
+  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+  ctx.strokeText(text, x, y);
+  ctx.fillText(text, x, y);
+
+  // underline
+  const metrics = ctx.measureText(text);
+  const textWidth = metrics.width;
+  const underlineY = y + fontSize * 1.05;
+  ctx.lineWidth = Math.max(2, fontSize * 0.05);
+  ctx.strokeStyle = captionColor;
+  ctx.beginPath();
+  ctx.moveTo(x - textWidth/2, underlineY);
+  ctx.lineTo(x + textWidth/2, underlineY);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function waitForFontThenDraw(){
+  const fontSize = parseInt(fontSizeInput.value, 10) || 46;
+  if(document.fonts && document.fonts.load){
+    document.fonts.load(`italic 700 ${fontSize}px "Ubuntu Mono"`).then(draw).catch(draw);
+  } else {
+    draw();
+  }
+}
+
+dayInput.addEventListener('input', waitForFontThenDraw);
+fontSizeInput.addEventListener('input', waitForFontThenDraw);
+yPosInput.addEventListener('input', draw);
+
+swatches.forEach(sw => {
+  sw.addEventListener('click', () => {
+    swatches.forEach(s => s.classList.remove('active'));
+    sw.classList.add('active');
+    captionColor = sw.dataset.color;
+    draw();
+  });
+});
+
+resetBtn.addEventListener('click', () => {
+  dayInput.value = '47';
+  fontSizeInput.value = '46';
+  yPosInput.value = '40';
+  captionColor = '#111111';
+  swatches.forEach(s => s.classList.remove('active'));
+  swatches[0].classList.add('active');
+  waitForFontThenDraw();
+});
+
+downloadBtn.addEventListener('click', () => {
+  const val = (dayInput.value || 'thumbnail').trim().replace(/[^a-z0-9]+/gi, '_');
+  const link = document.createElement('a');
+  link.download = `arch-linux-daily-day-${val || 'x'}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
+
+if(document.fonts && document.fonts.ready){
+  document.fonts.ready.then(draw);
+}
+</script>
+</body>
+</html>
